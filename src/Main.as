@@ -214,7 +214,7 @@
 		{
 			botoes.tutorialBtn.addEventListener(MouseEvent.CLICK, iniciaTutorial);
 			botoes.orientacoesBtn.addEventListener(MouseEvent.CLICK, openOrientacoes);
-			botoes.resetButton..addEventListener(MouseEvent.CLICK, btNewa);
+			botoes.resetButton.addEventListener(MouseEvent.CLICK, btNewa);
 			botoes.creditos.addEventListener(MouseEvent.CLICK, openCreditos);
 			
 			btCheck.addEventListener(MouseEvent.CLICK, btChecka);
