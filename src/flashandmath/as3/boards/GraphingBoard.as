@@ -154,7 +154,7 @@ package flashandmath.as3.boards {
 			this.addChild(spMask);
 			
 			shBorder=new Shape();
-			this.addChild(shBorder);
+			//this.addChild(shBorder);
 					
 			spBoard.mask=spMask;
 			
