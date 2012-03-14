@@ -8,6 +8,7 @@
 	import flash.display.MovieClip;
 	import flash.display.Stage;
 	import flash.events.MouseEvent;
+	import flash.external.ExternalInterface;
 	import flash.geom.Point;
 	import flash.geom.Rectangle;
 	import flashandmath.as3.tools.SimpleGraph;
@@ -205,9 +206,9 @@
 			
 			addListeners();
 			
-			initLMSConnection();
-			
 			iniciaTutorial();
+			
+			if(ExternalInterface.available) initLMSConnection();
 		}
 		
 		private function createCaixaOpcoes():void 
@@ -520,9 +521,12 @@
 		private var tutoSequence2:Array = ["A resposta correta foi destacada em verde."];
 										  
 		private var ptAltCerto:Point = new Point();
+		private var ptAltCaixaOpcoes:Point = new Point();
+		private var posCaixa:Array = ["",""];
 		
 		private function iniciaTutorial(e:MouseEvent = null):void 
 		{
+			getPosCaixa();
 			tutoPos = 0;
 			tutoPhaseFinal = false;
 			if(balao == null){
@@ -531,14 +535,14 @@
 				balao.visible = false;
 				
 				pointsTuto = 	[new Point(Graph.x + GRAPH_WIDTH / 2, Graph.y + GRAPH_HEIGHT / 2),
-								new Point(455, 127)];
+								ptAltCaixaOpcoes];
 								
 				tutoBaloonPos = [[CaixaTexto.TOP, CaixaTexto.CENTER],
-								[CaixaTexto.RIGHT, CaixaTexto.CENTER]];
+								posCaixa];
 								
 				pointsTuto2 = 	[ptAltCerto];
 								
-				tutoBaloonPos2 = 	[[CaixaTexto.RIGHT, CaixaTexto.CENTER]];
+				tutoBaloonPos2 = 	[posCaixa];
 			}
 			balao.removeEventListener(Event.CLOSE, closeBalao);
 			btCheck.removeEventListener(MouseEvent.CLICK, iniciaTutorialSegundaFase);
@@ -551,10 +555,36 @@
 			setChildIndex(bordaAtividade, numChildren - 1);
 		}
 		
+		private function getPosCaixa():void
+		{
+			if (caixaOpcoes.x + caixaOpcoes.width / 2 > 350) {
+				posCaixa[0] = CaixaTexto.RIGHT;
+				posCaixa[1] = CaixaTexto.CENTER;
+			}else {
+				posCaixa[0] = CaixaTexto.LEFT;
+				posCaixa[1] = CaixaTexto.CENTER;
+			}
+			
+			var ptAltCertoGlobal:Point = caixaOpcoes.localToGlobal(new Point(labelEq[randomTrue].x, labelEq[randomTrue].y));
+			
+			if (caixaOpcoes.x + caixaOpcoes.width / 2 > 350) {
+				ptAltCerto.x = caixaOpcoes.x + 20;
+				ptAltCerto.y = ptAltCertoGlobal.y + labelEq[randomTrue].height / 2 + 2;
+				
+				ptAltCaixaOpcoes.x = caixaOpcoes.x;
+				ptAltCaixaOpcoes.y = caixaOpcoes.y + caixaOpcoes.height / 2;
+			}else {
+				ptAltCerto.x = caixaOpcoes.x + caixaOpcoes.width - 20;
+				ptAltCerto.y = ptAltCertoGlobal.y + labelEq[randomTrue].height / 2 + 2;
+				
+				ptAltCaixaOpcoes.x = caixaOpcoes.x + caixaOpcoes.width;
+				ptAltCaixaOpcoes.y = caixaOpcoes.y + caixaOpcoes.height / 2;
+			}
+		}
+		
 		private function closeBalao(e:Event):void 
 		{
-			ptAltCerto.x = labelEq[randomTrue].x;
-			ptAltCerto.y = labelEq[randomTrue].y + labelEq[randomTrue].height / 2;
+			getPosCaixa();
 			
 			if (tutoPhaseFinal) {
 				tutoPos++;
@@ -565,8 +595,8 @@
 					tutoPhaseFinal = false;
 				}else {
 					btCheck.removeEventListener(MouseEvent.CLICK, iniciaTutorialSegundaFase);
-					balao.setText(tutoSequence2[tutoPos], tutoBaloonPos2[tutoPos][0], tutoBaloonPos2[tutoPos][1]);
-					balao.setPosition(pointsTuto2[tutoPos].x, pointsTuto2[tutoPos].y);
+					balao.setText(tutoSequence2[tutoPos], posCaixa[0], posCaixa[1]);
+					balao.setPosition(ptAltCerto.x, ptAltCerto.y);
 					setChildIndex(balao, numChildren - 1);
 					setChildIndex(bordaAtividade, numChildren - 1);
 				}
@@ -578,8 +608,15 @@
 					btCheck.addEventListener(MouseEvent.CLICK, iniciaTutorialSegundaFase);
 					tutoPhaseFinal = true;
 				}else {
-					balao.setText(tutoSequence[tutoPos], tutoBaloonPos[tutoPos][0], tutoBaloonPos[tutoPos][1]);
-					balao.setPosition(pointsTuto[tutoPos].x, pointsTuto[tutoPos].y);
+					if (tutoPos == 1) {
+						balao.setText(tutoSequence[tutoPos], posCaixa[0], posCaixa[1]);
+						balao.setPosition(ptAltCaixaOpcoes.x, ptAltCaixaOpcoes.y);
+					}
+					else {
+						balao.setText(tutoSequence[tutoPos], tutoBaloonPos[tutoPos][0], tutoBaloonPos[tutoPos][1]);
+						balao.setPosition(pointsTuto[tutoPos].x, pointsTuto[tutoPos].y);
+					}
+					
 					setChildIndex(balao, numChildren - 1);
 					setChildIndex(bordaAtividade, numChildren - 1);
 				}
@@ -589,11 +626,14 @@
 		private function iniciaTutorialSegundaFase(e:MouseEvent):void 
 		{
 			if (respUser == "") return;
+			
+			getPosCaixa();
+			
 			if (tutoPhaseFinal) {
 				balao.removeEventListener(Event.CLOSE, closeBalao);
 				tutoPos = 0;
-				balao.setText(tutoSequence2[tutoPos], tutoBaloonPos2[tutoPos][0], tutoBaloonPos2[tutoPos][1]);
-				balao.setPosition(pointsTuto2[tutoPos].x, pointsTuto2[tutoPos].y);
+				balao.setText(tutoSequence2[tutoPos], posCaixa[0], posCaixa[1]);
+				balao.setPosition(ptAltCerto.x, ptAltCerto.y);
 				balao.addEventListener(Event.CLOSE, closeBalao);
 				setChildIndex(balao, numChildren - 1);
 				setChildIndex(bordaAtividade, numChildren - 1);
