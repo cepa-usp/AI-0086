@@ -3,10 +3,12 @@
 	import cepa.utils.ToolTip;
 	import flash.display.MovieClip;
 	import flash.display.SimpleButton;
+	import flash.display.Sprite;
 	import flash.events.Event;
 	import flash.display.MovieClip;
 	import flash.display.Stage;
 	import flash.events.MouseEvent;
+	import flash.external.ExternalInterface;
 	import flash.geom.Point;
 	import flash.geom.Rectangle;
 	import flashandmath.as3.tools.SimpleGraph;
@@ -68,9 +70,9 @@
 		
 		//Graph Vars
 		private var Graph:SimpleGraph;
-		private var xRange:Array = [-5, 5];
-		private var yRange:Array = [-5, 5];
-		private var GRAPH_WIDTH = 420;
+		private var xRange:Array = [-10, 10];
+		private var yRange:Array = [-6, 6];
+		private var GRAPH_WIDTH = 680;
 		private var GRAPH_HEIGHT = 380;
 		
 		//SCORM VARIABLES
@@ -87,6 +89,7 @@
 		
 		private var orientacoesScreen:InstScreen;
 		private var creditosScreen:AboutScreen;
+		private var caixaOpcoes:MovieClip;
 		
 		/*
 		 * Filtro de conversão para tons de cinza.
@@ -190,17 +193,7 @@
 			addChild(orientacoesScreen);
 			
 			initContextMenu();
-			
-			btCheck = new BotaoTerminei();
-			btCheck.x = 450 + btCheck.width / 2;
-			btCheck.y = 230;
-			
-			btNew = new BotaoReiniciar();
-			btNew.x = btCheck.x + btCheck.width / 2 + 15 + btNew.width / 2;
-			btNew.y = 230;
-			
-			addChild(btCheck);
-			addChild(btNew);
+			createCaixaOpcoes();
 			
 			geraEq();
 			corrEq();
@@ -213,9 +206,46 @@
 			
 			addListeners();
 			
-			initLMSConnection();
-			
 			iniciaTutorial();
+			
+			if(ExternalInterface.available) initLMSConnection();
+		}
+		
+		private function createCaixaOpcoes():void 
+		{
+			caixaOpcoes = new CaixaOpcoes();
+			addChild(caixaOpcoes);
+			caixaOpcoes.x = 10;
+			caixaOpcoes.y = 10;
+			
+			btCheck = caixaOpcoes.btTerminei;
+			btNew = caixaOpcoes.btNovo;
+			
+			caixaOpcoes.addEventListener(MouseEvent.MOUSE_DOWN, initDrag);
+			
+			//btCheck = new BotaoTerminei();
+			//btCheck.x = 450 + btCheck.width / 2;
+			//btCheck.y = 230;
+			
+			//btNew = new BotaoReiniciar();
+			//btNew.x = btCheck.x + btCheck.width / 2 + 15 + btNew.width / 2;
+			//btNew.y = 230;
+			
+			//addChild(btCheck);
+			//addChild(btNew);
+		}
+		
+		private function initDrag(e:MouseEvent):void 
+		{
+			if (e.target is RadioButton || e.target is SimpleButton) return;
+			
+			stage.addEventListener(MouseEvent.MOUSE_UP, stopDragCaixa);
+			caixaOpcoes.startDrag();
+		}
+		
+		private function stopDragCaixa(e:MouseEvent):void 
+		{
+			caixaOpcoes.stopDrag();
 		}
 		
 		private function addListeners():void 
@@ -267,8 +297,8 @@
 		private function btChecka(event:MouseEvent):void {
 			if(respUser != ""){
 				if(respUser == labelEq[randomTrue].value){
-					//labelEq[randomTrue].setStyle("textFormat", correct);
-					labelText[randomTrue].setTextFormat(correct);
+					labelEq[randomTrue].setStyle("textFormat", correct);
+					//labelText[randomTrue].setTextFormat(correct);
 					
 					btCheck.mouseEnabled = false;
 					btCheck.alpha = 0.5;
@@ -300,9 +330,10 @@
 					//-----------------
 				}
 				if(respUser != labelEq[randomTrue].value){
-					//labelEq[Number(indiceUser)].setStyle("textFormat", wrong);
-					labelText[indiceUser].setTextFormat(wrong);
-					labelText[randomTrue].setTextFormat(correct);
+					labelEq[Number(indiceUser)].setStyle("textFormat", wrong);
+					labelEq[Number(randomTrue)].setStyle("textFormat", correct);
+					//labelText[indiceUser].setTextFormat(wrong);
+					//labelText[randomTrue].setTextFormat(correct);
 					btCheck.mouseEnabled = false;
 					btCheck.alpha = 0.5;
 					btCheck.filters = [GRAYSCALE_FILTER];
@@ -330,18 +361,22 @@
 					}
 					//-----------------
 				}
+				for (var j:uint = 1; j <= numEquations; j++) {
+					labelEq[j].mouseEnabled = false;
+				}
 			}else
 			{	
 				
 			}
+			
 		}
 		
 		private function btNewa(event:MouseEvent):void {
 			//removeChild(aLabel);
 			respUser = "";
 			for (var i:uint = 1; i <= numEquations; i++) {
-				removeChild(labelEq[i]);
-				removeChild(labelText[i]);
+				caixaOpcoes.removeChild(labelEq[i]);
+				//caixaOpcoes.removeChild(labelText[i]);
 			}
 			geraEq();
 			corrEq();
@@ -360,30 +395,30 @@
 			}
 			if (!comparaEq()) {
 				for (var j:uint = 1; j <= numEquations; j++) {
-				labelEq[j] = new RadioButton();
-				labelEq[j].x = 450;
-				labelEq[j].y = 25 + 30*j;
-				labelEq[j].label = "";
-				labelEq[j].value = "y = "+ String(equation[j]).replace("*","");
-				labelEq[j].name = j;
-				labelEq[j].group = rbGrp;
-				labelEq[j].width = 200;
-				labelEq[j].setStyle("textFormat", newFormat);
-				addChild(labelEq[j]);
-				labelText[j] = new TextField();
-				labelText[j].x = 30 + 450;
-				labelText[j].y = 25 + 30*j;
-				labelText[j].text = "y = "+ String(equation[j]).replace("*","").replace("- -","+ ");
-				labelText[j].setTextFormat(newFormat);
-				labelText[j].autoSize = "left";
-				labelText[j].selectable = false;
-				addChild(labelText[j]);
+					labelEq[j] = new RadioButton();
+					labelEq[j].x = 10;
+					labelEq[j].y = 25*j;
+					labelEq[j].label = "y = "+ String(equation[j]).replace("*","").replace("- -","+ ");
+					labelEq[j].value = "y = "+ String(equation[j]).replace("*","");
+					labelEq[j].name = j;
+					labelEq[j].group = rbGrp;
+					labelEq[j].width = 250;
+					labelEq[j].setStyle("textFormat", newFormat);
+					caixaOpcoes.addChild(labelEq[j]);
+					//labelText[j] = new TextField();
+					//labelText[j].x = 30 + 10;
+					//labelText[j].y = 25*j;
+					//labelText[j].text = "y = "+ String(equation[j]).replace("*","").replace("- -","+ ");
+					//labelText[j].setTextFormat(newFormat);
+					//labelText[j].autoSize = "left";
+					//labelText[j].selectable = false;
+					//caixaOpcoes.addChild(labelText[j]);
 				}
 				rbGrp.addEventListener(MouseEvent.CLICK, clickHandler);
 				
-				btCheck.mouseEnabled = true;
-				btCheck.alpha = 1;
-				btCheck.filters = [];
+				btCheck.mouseEnabled = false;
+				btCheck.alpha = 0.5;
+				btCheck.filters = [GRAYSCALE_FILTER];
 				
 				btNew.mouseEnabled = false;
 				btNew.alpha = 0.5;
@@ -398,6 +433,10 @@
 		private function clickHandler(event:MouseEvent):void { 
 			respUser = event.target.selection.value;
 			indiceUser = event.target.selection.name;
+			
+			btCheck.mouseEnabled = true;
+			btCheck.alpha = 1;
+			btCheck.filters = [];
 		} 
 
 		//Função que verifica se existem eq iguais
@@ -434,11 +473,13 @@
 			//Graph.board.drawGrid();
 			Graph.board.addLabels();
 			Graph.board.disableCoordsDisp();
+			Graph.setNumPoints(20000);
 			Graph.graphRectangular(equation[randomTrue], "x", 1, 2, 0xCC0000);
 			addChild(Graph);
 			
-			setChildIndex(pontaX, numChildren - 1);
-			setChildIndex(pontaY, numChildren - 1);
+			setChildIndex(pontaX, 0);
+			setChildIndex(pontaY, 0);
+			setChildIndex(Graph, 0);
 		}
 
 		//Função que limpa alternativas
@@ -477,13 +518,15 @@
 		private var tutoSequence:Array = ["Este é o gráfico de uma função logarítmica, escolhida aleatoriamente.",
 										  "Uma dessas alternativas contém a expressão da função cujo gráfico aparece ao lado. Identifique-a e, em seguida, pressione \"terminei\"."];
 										  
-		private var tutoSequence2:Array = ["A resposta correta foi destacada em verde.",
-										  "Você pode começar um novo exercício pressionando o botão \"Novo exercício\"."];
+		private var tutoSequence2:Array = ["A resposta correta foi destacada em verde."];
 										  
 		private var ptAltCerto:Point = new Point();
+		private var ptAltCaixaOpcoes:Point = new Point();
+		private var posCaixa:Array = ["",""];
 		
 		private function iniciaTutorial(e:MouseEvent = null):void 
 		{
+			getPosCaixa();
 			tutoPos = 0;
 			tutoPhaseFinal = false;
 			if(balao == null){
@@ -492,16 +535,14 @@
 				balao.visible = false;
 				
 				pointsTuto = 	[new Point(Graph.x + GRAPH_WIDTH / 2, Graph.y + GRAPH_HEIGHT / 2),
-								new Point(455, 127)];
+								ptAltCaixaOpcoes];
 								
 				tutoBaloonPos = [[CaixaTexto.TOP, CaixaTexto.CENTER],
-								[CaixaTexto.RIGHT, CaixaTexto.CENTER]];
+								posCaixa];
 								
-				pointsTuto2 = 	[ptAltCerto,
-								new Point(btNew.x, btNew.y - btNew.height / 2)];
+				pointsTuto2 = 	[ptAltCerto];
 								
-				tutoBaloonPos2 = 	[[CaixaTexto.RIGHT, CaixaTexto.CENTER],
-									[CaixaTexto.BOTTON, CaixaTexto.LAST]];
+				tutoBaloonPos2 = 	[posCaixa];
 			}
 			balao.removeEventListener(Event.CLOSE, closeBalao);
 			btCheck.removeEventListener(MouseEvent.CLICK, iniciaTutorialSegundaFase);
@@ -514,10 +555,36 @@
 			setChildIndex(bordaAtividade, numChildren - 1);
 		}
 		
+		private function getPosCaixa():void
+		{
+			if (caixaOpcoes.x + caixaOpcoes.width / 2 > 350) {
+				posCaixa[0] = CaixaTexto.RIGHT;
+				posCaixa[1] = CaixaTexto.CENTER;
+			}else {
+				posCaixa[0] = CaixaTexto.LEFT;
+				posCaixa[1] = CaixaTexto.CENTER;
+			}
+			
+			var ptAltCertoGlobal:Point = caixaOpcoes.localToGlobal(new Point(labelEq[randomTrue].x, labelEq[randomTrue].y));
+			
+			if (caixaOpcoes.x + caixaOpcoes.width / 2 > 350) {
+				ptAltCerto.x = caixaOpcoes.x + 20;
+				ptAltCerto.y = ptAltCertoGlobal.y + labelEq[randomTrue].height / 2 + 2;
+				
+				ptAltCaixaOpcoes.x = caixaOpcoes.x;
+				ptAltCaixaOpcoes.y = caixaOpcoes.y + caixaOpcoes.height / 2;
+			}else {
+				ptAltCerto.x = caixaOpcoes.x + caixaOpcoes.width - 20;
+				ptAltCerto.y = ptAltCertoGlobal.y + labelEq[randomTrue].height / 2 + 2;
+				
+				ptAltCaixaOpcoes.x = caixaOpcoes.x + caixaOpcoes.width;
+				ptAltCaixaOpcoes.y = caixaOpcoes.y + caixaOpcoes.height / 2;
+			}
+		}
+		
 		private function closeBalao(e:Event):void 
 		{
-			ptAltCerto.x = labelEq[randomTrue].x;
-			ptAltCerto.y = labelEq[randomTrue].y + labelEq[randomTrue].height / 2;
+			getPosCaixa();
 			
 			if (tutoPhaseFinal) {
 				tutoPos++;
@@ -528,8 +595,8 @@
 					tutoPhaseFinal = false;
 				}else {
 					btCheck.removeEventListener(MouseEvent.CLICK, iniciaTutorialSegundaFase);
-					balao.setText(tutoSequence2[tutoPos], tutoBaloonPos2[tutoPos][0], tutoBaloonPos2[tutoPos][1]);
-					balao.setPosition(pointsTuto2[tutoPos].x, pointsTuto2[tutoPos].y);
+					balao.setText(tutoSequence2[tutoPos], posCaixa[0], posCaixa[1]);
+					balao.setPosition(ptAltCerto.x, ptAltCerto.y);
 					setChildIndex(balao, numChildren - 1);
 					setChildIndex(bordaAtividade, numChildren - 1);
 				}
@@ -541,8 +608,15 @@
 					btCheck.addEventListener(MouseEvent.CLICK, iniciaTutorialSegundaFase);
 					tutoPhaseFinal = true;
 				}else {
-					balao.setText(tutoSequence[tutoPos], tutoBaloonPos[tutoPos][0], tutoBaloonPos[tutoPos][1]);
-					balao.setPosition(pointsTuto[tutoPos].x, pointsTuto[tutoPos].y);
+					if (tutoPos == 1) {
+						balao.setText(tutoSequence[tutoPos], posCaixa[0], posCaixa[1]);
+						balao.setPosition(ptAltCaixaOpcoes.x, ptAltCaixaOpcoes.y);
+					}
+					else {
+						balao.setText(tutoSequence[tutoPos], tutoBaloonPos[tutoPos][0], tutoBaloonPos[tutoPos][1]);
+						balao.setPosition(pointsTuto[tutoPos].x, pointsTuto[tutoPos].y);
+					}
+					
 					setChildIndex(balao, numChildren - 1);
 					setChildIndex(bordaAtividade, numChildren - 1);
 				}
@@ -552,11 +626,14 @@
 		private function iniciaTutorialSegundaFase(e:MouseEvent):void 
 		{
 			if (respUser == "") return;
+			
+			getPosCaixa();
+			
 			if (tutoPhaseFinal) {
 				balao.removeEventListener(Event.CLOSE, closeBalao);
 				tutoPos = 0;
-				balao.setText(tutoSequence2[tutoPos], tutoBaloonPos2[tutoPos][0], tutoBaloonPos2[tutoPos][1]);
-				balao.setPosition(pointsTuto2[tutoPos].x, pointsTuto2[tutoPos].y);
+				balao.setText(tutoSequence2[tutoPos], posCaixa[0], posCaixa[1]);
+				balao.setPosition(ptAltCerto.x, ptAltCerto.y);
 				balao.addEventListener(Event.CLOSE, closeBalao);
 				setChildIndex(balao, numChildren - 1);
 				setChildIndex(bordaAtividade, numChildren - 1);
