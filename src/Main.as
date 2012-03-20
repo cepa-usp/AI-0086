@@ -235,17 +235,29 @@
 			//addChild(btNew);
 		}
 		
+		private var posClickCaixa:Point;
 		private function initDrag(e:MouseEvent):void 
 		{
 			if (e.target is RadioButton || e.target is SimpleButton) return;
 			
+			posClickCaixa = new Point(caixaOpcoes.mouseX, caixaOpcoes.mouseY);
+			
 			stage.addEventListener(MouseEvent.MOUSE_UP, stopDragCaixa);
-			caixaOpcoes.startDrag();
+			stage.addEventListener(MouseEvent.MOUSE_MOVE, movingBox);
+			//caixaOpcoes.startDrag();
+		}
+		
+		private function movingBox(e:MouseEvent):void 
+		{
+			caixaOpcoes.x = Math.min(700 - caixaOpcoes.width, Math.max(stage.mouseX - posClickCaixa.x, 0));
+			caixaOpcoes.y = Math.min(400 - caixaOpcoes.height, Math.max(stage.mouseY - posClickCaixa.y, 0));
 		}
 		
 		private function stopDragCaixa(e:MouseEvent):void 
 		{
-			caixaOpcoes.stopDrag();
+			stage.removeEventListener(MouseEvent.MOUSE_MOVE, movingBox);
+			stage.removeEventListener(MouseEvent.MOUSE_UP, stopDragCaixa);
+			//caixaOpcoes.stopDrag();
 		}
 		
 		private function addListeners():void 
@@ -470,7 +482,7 @@
 			//Graph.board.setCrossSizeAndThick(10, 10);
 			//Graph.board.setTicks(2, 2, 10, 10);
 			Graph.board.drawTicks();
-			//Graph.board.drawGrid();
+			Graph.board.drawGrid();
 			Graph.board.addLabels();
 			Graph.board.disableCoordsDisp();
 			Graph.setNumPoints(20000);
@@ -735,6 +747,8 @@
 		{
 			if (connected)
 			{
+				scorm.set("cmi.exit", "suspend");
+				
 				// Salva no LMS a nota do aluno.
 				var success:Boolean = scorm.set("cmi.score.raw", (lastScore).toString());
 
